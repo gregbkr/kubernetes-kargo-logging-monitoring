@@ -96,7 +96,7 @@ ansible all -a 'docker version'
 ansible node1 -a 'update_engine_client -update'
 ```
 
-*I got ansible.cfg and inventory.yml example in ./utils*
+*I got ansible.cfg and inventory.yml example in ./util*
 
 ### 1.4 Install kubectl
 
@@ -523,8 +523,8 @@ sudo sysctl --system
 - First see if ubuntu will be in the same namespace as the service you want to check:
 
 ```
-nano utils/ubuntu.yaml
-kubectl apply -f utils/ubuntu.yaml
+nano util/ubuntu.yaml
+kubectl apply -f util/ubuntu.yaml
 ```
 
 - Depending in which namespace ubuntu runs, you can check services with one of these commands:
