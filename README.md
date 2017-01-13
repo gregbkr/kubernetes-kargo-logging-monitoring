@@ -50,7 +50,7 @@ Please install with your preferered cloud provider, or on baremetal, basic lates
 
 We are using the kargo great tool. Please clone in your repo
 
-    git clone https://github.com/kubernetes-incubator/kargo kargo cd kargo
+    git clone https://github.com/kubernetes-incubator/kargo kargo && cd kargo
 
 First fill the inventory file with your node info
 
