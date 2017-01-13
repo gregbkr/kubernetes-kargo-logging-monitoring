@@ -96,13 +96,10 @@ ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-ke
 ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
 ```
 
-And give perm chmod -R 640 kubeclt/*
-
-
 **Configure kubectl**
 
 ```
-kubectl config set-cluster kargo --server=https://159.100.253.192 --certificate-authority=kubectl/ca.pem
+kubectl config set-cluster kargo --server=https://master1_ip --certificate-authority=kubectl/ca.pem
 
 kubectl config set-credentials kadmin \
     --certificate-authority=kubectl/ca.pem \
@@ -123,9 +120,8 @@ kubectl get all --all-namespaces
 
 If issues, see troubleshooting section.
 
+Do you want to migration k8s, add new node? Please see the annexes.
 
-
-	
 # 2. Deploy logging (efk) to collect k8s & containers events
 	
 ### 2.1 Deploy elasticsearch, fluentd, kibana
@@ -587,10 +583,92 @@ alias kl='kubectl logs'
 
 ```
 
-### Need another slave node?
-Edit ansible-cloudstack/k8s.yml and run again the deploy
+### Need another minion node?
+Edit kargo/inventory/inventory.cfg and run again the deploy
 
-### Want to start from scrash? 
+### Want to upgrade k8s version?
+
+    cd kargo
+    nano inventory/group_vars/all.yml   <-- edit kube_version: 1.x.x
+
+Run the install again:
+
+    ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+
+## Migrate the whole k8s to a new environment 
+
+You need to consider these steps:
+- backup etcd
+- Export namespaces and services
+- Backup your persistant data (not covered here, it is a classic database dump or flat file backup. It is not specific to k8s)
+
+**Etcd**
+Please Backup etcd in case something fails during a migration. But it is a bad idea to backup and restore etcd on another environment because all sorts of things (endpoints, node names, IP, etc) are different between clusters. So better export and import namespaces and services only.
+
+**Dump Namespace and services states**
+
+--> Careful: simple pod are not dump in these lines, you need to have: deploy, rc, or daemonset, svc.
+So need to transfort all simple pods to deployment if needed.
+
+    mkdir ./dump
+
+Export all namespaces (not kube-system):
+
+```
+kubectl get --export -o=json ns | \
+jq '.items[] |
+	select(.metadata.name!="kube-system") |
+	select(.metadata.name!="default") |
+	del(.status,
+        .metadata.uid,
+        .metadata.selfLink,
+        .metadata.resourceVersion,
+        .metadata.creationTimestamp,
+        .metadata.generation
+    )' > ./dump/ns.json
+```
+
+Export all services, controllers (rc,ds,replicaset,deploy), secrets and daemonsets	
+Simple pod and job are not migrated.
+
+```
+for ns in $(jq -r '.metadata.name' < ./dump/ns.json);do
+    echo "Namespace: $ns"
+    kubectl --namespace="${ns}" get --export -o=json svc,deploy,rc,secrets,configmap,ds | \
+    jq '.items[] |
+        select(.type!="kubernetes.io/service-account-token") |
+        del(
+            .spec.clusterIP,
+            .metadata.uid,
+            .metadata.selfLink,
+            .metadata.resourceVersion,
+            .metadata.creationTimestamp,
+            .metadata.generation,
+            .status,
+            .spec.template.spec.securityContext,
+            .spec.template.spec.dnsPolicy,
+            .spec.template.spec.terminationGracePeriodSeconds,
+            .spec.template.spec.restartPolicy
+        )' >> "./dump/cluster-dump.json"
+done
+```	
+
+**Backup etcd**
+To complete...
+
+
+**Restore namespaces and services on a new fresh k8s**
+
+Namespaces:
+  kubectl create -f dump/ns.json
+
+Resources state:
+  kubectl create -f dump/cluster-dump.json
+	
+You will have to reimport db dump or flat data on host folder if you had persistent data.
+
+
+### Want to start containers from scratch? 
 
 Delete the corresponding namespace, all related containers/services will be destroyed.
 
