@@ -24,46 +24,43 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 ### 1.1 Clone repo
 
-    git clone --recursive https://github.com/gregbkr/kubernetes-kargo-logging-monitoring.git k8s && cd k8s
+    git clone https://github.com/gregbkr/kubernetes-kargo-logging-monitoring.git k8s && cd k8s
 
 ### 1.2 Deploy coreos nodes
 
-*Bastion*
+**Bastion**
 
 An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubeclt.
 You need latest version of ansible.
 Netaddr: pip install netaddr
 
 
-*Firewall*
+**Firewall**
 
 This setup doesn't managed firewall rules yet.
 Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
 Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubeclt.
 Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
 
-*Coreos*
+**Coreos**
 
 Please install with your preferered cloud provider, or on baremetal, basic latest coreos os as much as you need nodes.
 
 
 ### 1.3 Deploy k8s
 
-We are using the kargo great tool: https://github.com/kubernetes-incubator/kargo
+We are using the kargo great tool. Please clone in your repo
+
+    git clone https://github.com/kubernetes-incubator/kargo kargo cd kargo
 
 First fill the inventory file with your node info
 
-   cp kargo/inventory.exemple kargo/inventory.cfg
+   cp inventory.exemple inventory.cfg
    nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
 
 
-Update coreos to get latest docker version 12
 
-  ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
-  ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
-
-
-*Deploy k8s*
+**Deploy k8s**
 
   nano inventory/group_vars/all.yml   <-- and edit below v
   bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
@@ -72,7 +69,13 @@ Update coreos to get latest docker version 12
   
   ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
 
-Run few times untils no more errors
+Run few times untils no more errors.
+
+- Error with docker version? Update coreos to get latest docker version 12
+
+  ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
+  ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --becom$
+
 
 
 ### 1.4 Install kubectl
@@ -80,13 +83,13 @@ Run few times untils no more errors
 Kubeclt is your admin local client to pilot the k8s cluster. One version of kubectl is already present on master, but it is better to have it locally, on your admin/bastion.
 Please use the same version as server. You will be able to talk and pilot k8s with this tool.
 
-*Get kubectl*
+**Get kubectl**
 
     curl -O https://storage.googleapis.com/kubernetes-release/release/v1.5.1/bin/linux/amd64/kubectl
     chmod +x kubectl
     mv kubectl /usr/local/bin/kubectl
 
-*Get the cert from master*
+**Get the cert from master**
 
 mkdir kubectl
   ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
@@ -96,7 +99,7 @@ mkdir kubectl
 And give perm chmod -R 640 kubeclt/*
 
 
-*Configure kubectl*
+**Configure kubectl**
 
 ```
 kubectl config set-cluster kargo --server=https://159.100.253.192 --certificate-authority=kubectl/ca.pem
@@ -113,7 +116,7 @@ kubectl get node
 kubectl get all --all-namespaces
 ```
 
-*Autocompletion*
+**Autocompletion**
 
     source <(kubectl completion bash)
     kubeclt get nod +[TAB]
