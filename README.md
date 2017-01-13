@@ -1,10 +1,12 @@
-# Deploy kubernetes via ansible (on cloudstack servers) with logging (efk) & monitoring (prometheus) support #
+# Deploy kubernetes via kargo with logging (efk) & monitoring (prometheus) support #
 
-![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/k8s-infra1.JPG)
+![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra1.JPG)
 
 ## What you will get:
-- 1 master node running : k8s for container orchestration, it will pilot and gives work to the minions
-- 2(or more) minion/slave/worker nodes : running the actual containers and doing the actual work
+- Kargo: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
+- X number of master node running : k8s for container orchestration, it will pilot and gives work to the minions
+- Y number of minion/slave/worker nodes : running the actual containers and doing the actual work
+- Z number of etcd: database to store your k8s configuration
 - Efk: we will send all k8s container logs to an elasticsearch DB, via fluentd, and visualize dashboards with kibana
 - Prometheus will monitoring all this infra, with grafana dashbaord
 - Heapster is an alternative for monitoring your k8s cluster
@@ -13,8 +15,8 @@
 - Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
 *Prerequisit:*
-- Cloudstack cloud provider (ex: exoscale) / but you can deploy anywhere else with a bit of adaptation in ansible. Deploying logging and monitoring stay the same at the moment you have k8s running
-- A vm (ubuntu) with ansible installed, where you will run recipes, and manage k8s with kubeclt
+- Kargo support many different type of cloud. I will show you the more broader way to build k8s by nore talking care of the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
+
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
@@ -22,43 +24,104 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 ### 1.1 Clone repo
 
-    git clone https://github.com/gregbkr/kubernetes-ansible-logging-monitoring.git k8s && cd k8s
+    git clone --recursive https://github.com/gregbkr/kubernetes-kargo-logging-monitoring.git k8s && cd k8s
 
-### 1.2 Install kubectl
+### 1.2 Deploy coreos nodes
 
-Kubeclt is your admin local client to pilot the k8s cluster.
+*Bastion*
+
+An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubeclt.
+You need latest version of ansible.
+Netaddr: pip install netaddr
+
+
+*Firewall*
+
+This setup doesn't managed firewall rules yet.
+Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
+Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubeclt.
+Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
+
+*Coreos*
+
+Please install with your preferered cloud provider, or on baremetal, basic latest coreos os as much as you need nodes.
+
+
+### 1.3 Deploy k8s
+
+We are using the kargo great tool: https://github.com/kubernetes-incubator/kargo
+
+First fill the inventory file with your node info
+
+   cp kargo/inventory.exemple kargo/inventory.cfg
+   nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
+
+
+Update coreos to get latest docker version 12
+
+  ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
+  ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
+
+
+*Deploy k8s*
+
+  nano inventory/group_vars/all.yml   <-- and edit below v
+  bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
+  # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
+  cluster_name: cluster.local
+  
+  ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+
+Run few times untils no more errors
+
+
+### 1.4 Install kubectl
+
+Kubeclt is your admin local client to pilot the k8s cluster. One version of kubectl is already present on master, but it is better to have it locally, on your admin/bastion.
 Please use the same version as server. You will be able to talk and pilot k8s with this tool.
 
-    curl -O https://storage.googleapis.com/kubernetes-release/release/v1.4.6/bin/linux/amd64/kubectl
+*Get kubectl*
+
+    curl -O https://storage.googleapis.com/kubernetes-release/release/v1.5.1/bin/linux/amd64/kubectl
     chmod +x kubectl
     mv kubectl /usr/local/bin/kubectl
 
-Autocompletion
+*Get the cert from master*
+
+mkdir kubectl
+  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
+  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-key.pem > kubectl/admin-key.pem
+  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
+
+And give perm chmod -R 640 kubeclt/*
+
+
+*Configure kubectl*
+
+```
+kubectl config set-cluster kargo --server=https://159.100.253.192 --certificate-authority=kubectl/ca.pem
+
+kubectl config set-credentials kadmin \
+    --certificate-authority=kubectl/ca.pem \
+    --client-key=kubectl/admin-key.pem \
+    --client-certificate=kubectl/admin.pem  
+
+kubectl config set-context kargo --cluster=kargo --user=kadmin
+kubectl config use-context kargo
+
+kubectl get node
+kubectl get all --all-namespaces
+```
+
+*Autocompletion*
 
     source <(kubectl completion bash)
     kubeclt get nod +[TAB]
-    
-If issues, see troubleshooting section. 
+
+If issues, see troubleshooting section.
 
 
-### 1.3 Deploy k8s for a cloudstack infra
 
-I will use the nice setup made by Seb: https://www.exoscale.ch/syslog/2016/05/09/kubernetes-ansible/
-I just added few lines in file: ansible/roles/k8s/templates/k8s-node.j2 to be able to collect logs with fluentd
-(# In order to have logs in /var/log/containers to be pickup by fluentd
-    Environment="RKT_OPTS=--volume dns,kind=host,source=/etc/resolv.conf --mount volume=dns,target=/etc/resolv.conf --volume var-log,kind=host,source=/var/log --mount volume=var-log,target=/var/log" )
-
-    nano ansible/k8s.yml      <-- edit k8s version, num_node, ssh_key if you want to use your own
-
-Next step will create firewall rules k8s, master and minion nodes, and install k8s components
-Run recipe:
-
-	ansible-playbook ansible/k8s.yml
-	watch kubectl get node    <-- wait for the nodes to be up
-
-### 1.4 Checks:
-	
-	kubectl get all --all-namespaces    <-- should have no error here
 	
 # 2. Deploy logging (efk) to collect k8s & containers events
 	
