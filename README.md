@@ -54,7 +54,7 @@ We are using the kargo great tool. Please clone in your repo
 
 First fill the inventory file with your node info
 
-    cp inventory.exemple inventory.cfg
+    cp inventory/inventory.example inventory/inventory.cfg
     nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
 
 **Deploy k8s**
@@ -63,18 +63,36 @@ First fill the inventory file with your node info
     bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
     cluster_name: cluster.local
-  
-    ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+
+Set ansible configuration with your key and inventory
+
+```
+nano inventory/ansible.cfg
+  private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
+  remote_user=core
+  hostfile = ./inventory/inventory.cfg
+```
+
+Then deploy k8s with ansible:
+
+ansible-playbook cluster.yml
 
 Run few times untils no more errors.
+
+- Error with ansible commands? Try the param in command line:
+
+```
+ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+```
 
 - Error with docker version? Update coreos to get latest docker version 12
 
 ```
-ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
-ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --becom$
+ansible all -a 'docker version'
+ansible node1 -a 'update_engine_client -update'
 ```
 
+*I got ansible.cfg and inventory.yml example in ./utils*
 
 ### 1.4 Install kubectl
 
@@ -176,8 +194,6 @@ If you got some "context deadline exceeded" or "getsockopt connection refused", 
 Try a query: "node_memory_Active" > Execute > Graph --> you should see 2 lines representing both nodes.
 
 ![prometheus.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/prometheus.JPG)
-
-
 
 **Grafana**
 
@@ -593,7 +609,7 @@ Edit kargo/inventory/inventory.cfg and run again the deploy
 
 Run the install again:
 
-    ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+    ansible-playbook cluster.yml
 
 ## Migrate the whole k8s to a new environment 
 
@@ -603,6 +619,7 @@ You need to consider these steps:
 - Backup your persistant data (not covered here, it is a classic database dump or flat file backup. It is not specific to k8s)
 
 **Etcd**
+
 Please Backup etcd in case something fails during a migration. But it is a bad idea to backup and restore etcd on another environment because all sorts of things (endpoints, node names, IP, etc) are different between clusters. So better export and import namespaces and services only.
 
 **Dump Namespace and services states**
@@ -654,6 +671,7 @@ done
 ```	
 
 **Backup etcd**
+
 To complete...
 
 
