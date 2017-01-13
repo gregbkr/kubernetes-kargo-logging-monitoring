@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    app: postgres
+    version: v1
+  template:
+    metadata:
+      labels:
+        app: postgres
+        version: v1
+    spec:
+      nodeSelector:
+        role: loadbalancer
+      containers:
+      - image: postgres
+        imagePullPolicy: Always
+        name: postgres
+        resources: {}

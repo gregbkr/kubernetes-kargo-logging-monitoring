@@ -1,0 +1,23 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kube-system
+  namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  rules:
+    - host: kubernetes-dashboard.satoshi.tech
+      http:
+        paths:
+          - backend:
+              serviceName: kubernetes-dashboard
+              servicePort: 9999
+    - host: traefik-console.satoshi.tech
+      http:
+        paths:
+          - backend:
+              serviceName: traefik-console
+              servicePort: 8080
+

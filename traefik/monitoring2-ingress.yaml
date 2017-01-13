@@ -1,0 +1,16 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: monitoring2
+  namespace: monitoring2
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  rules:
+    - host: grafana2.satoshi.tech
+      http:
+        paths:
+          - backend:
+              serviceName: grafana2
+              servicePort: 3002

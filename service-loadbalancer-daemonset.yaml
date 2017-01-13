@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: service-loadbalancer
+  namespace: kube-system
+  labels:
+    app: service-loadbalancer
+    version: v1
+spec:
+  template:
+    metadata:
+      labels:
+        app: service-loadbalancer
+        version: v1
+    spec:
+      containers:
+      - image: gcr.io/google_containers/servicelb:0.4
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        name: haproxy
+        ports:
+        ## All http services
+        # kibana
+        - containerPort: 5601
+          hostPort: 5601
+          protocol: TCP
+        # Prometheus
+        - containerPort: 9090
+          hostPort: 9090
+          protocol: TCP
+        # Grafana
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: TCP
+        # Grafana2
+        - containerPort: 3002
+          hostPort: 3002
+          protocol: TCP
+        # kubernetes-dashboard-addon
+        - containerPort: 9999
+          hostPort: 9999
+          protocol: TCP
+        resources: {}
+        resources: {}
+        args:
+        - --tcp-services=kibana:5601,prometheus:9090,grafana:3000,grafana2:3002,kubernetes-dashboard:9999
+      nodeSelector:
+        role: loadbalancer
