@@ -31,9 +31,9 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 **Bastion**
 
 An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubeclt.
-You need latest version of ansible.
-Netaddr: pip install netaddr
+You need latest version of ansible. You need Netaddr too: 
 
+    pip install netaddr
 
 **Firewall**
 
@@ -46,7 +46,6 @@ Open outside acccess 80,443 and in time services we will test later(efk, prometh
 
 Please install with your preferered cloud provider, or on baremetal, basic latest coreos os as much as you need nodes.
 
-
 ### 1.3 Deploy k8s
 
 We are using the kargo great tool. Please clone in your repo
@@ -55,27 +54,26 @@ We are using the kargo great tool. Please clone in your repo
 
 First fill the inventory file with your node info
 
-   cp inventory.exemple inventory.cfg
-   nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
-
-
+    cp inventory.exemple inventory.cfg
+    nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
 
 **Deploy k8s**
 
-  nano inventory/group_vars/all.yml   <-- and edit below v
-  bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
-  # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
-  cluster_name: cluster.local
+    nano inventory/group_vars/all.yml   <-- and edit below v
+    bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
+    # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
+    cluster_name: cluster.local
   
-  ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
+    ansible-playbook -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root cluster.yml
 
 Run few times untils no more errors.
 
 - Error with docker version? Update coreos to get latest docker version 12
 
-  ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
-  ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --becom$
-
+```
+ansible all -a 'docker version'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --become-user=root
+ansible node1 -a 'update_engine_client -update'  -i inventory/inventory.cfg -e ansible_ssh_user=core -e ansible_ssh_private_key_file=/root/.ssh/id_rsa_sbexx -b --becom$
+```
 
 
 ### 1.4 Install kubectl
@@ -91,10 +89,12 @@ Please use the same version as server. You will be able to talk and pilot k8s wi
 
 **Get the cert from master**
 
+```
 mkdir kubectl
-  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
-  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-key.pem > kubectl/admin-key.pem
-  ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-key.pem > kubectl/admin-key.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
+```
 
 And give perm chmod -R 640 kubeclt/*
 
