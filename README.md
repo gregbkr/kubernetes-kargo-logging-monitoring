@@ -71,6 +71,10 @@ nano inventory/ansible.cfg
   private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
   remote_user=core
   hostfile = ./inventory/inventory.cfg
+  [privilege_escalation]
+  become = yes
+  become_method = sudo
+  become_user = root
 ```
 
 Then deploy k8s with ansible:
