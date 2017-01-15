@@ -17,10 +17,14 @@
 *Prerequisit:*
 - Kargo support many different type of cloud. I will show you the more broader way to build k8s by nore talking care of the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
 
-
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
+
 # 1. Deploy kubernetes
+
+We will deploy a base k8s multi-master, etcd cluster, and dns support. You can modify the architecture depending on which values you will set later in inventory.cfg.
+
+![k8s-kargo.PNG](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-kargo.PNG)
 
 ### 1.1 Clone repo
 
