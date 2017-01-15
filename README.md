@@ -116,8 +116,8 @@ Please use the same version as server. You will be able to talk and pilot k8s wi
 
 ```
 mkdir kubectl
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1.pem > kubectl/admin.pem
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1-key.pem > kubectl/admin-key.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1.pem > kubectl/admin-node1.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1-key.pem > kubectl/admin-node1-key.pem
 ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
 ```
 
@@ -128,8 +128,8 @@ kubectl config set-cluster kargo --server=https://master1_ip --certificate-autho
 
 kubectl config set-credentials kadmin \
     --certificate-authority=kubectl/ca.pem \
-    --client-key=kubectl/admin-key.pem \
-    --client-certificate=kubectl/admin.pem  
+    --client-key=kubectl/admin-node1-key.pem \
+    --client-certificate=kubectl/admin-node1.pem  
 
 kubectl config set-context kargo --cluster=kargo --user=kadmin
 kubectl config use-context kargo
