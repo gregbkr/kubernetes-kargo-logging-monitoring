@@ -60,7 +60,9 @@ First fill the inventory file with your node info
 **Deploy k8s**
 
     nano inventory/group_vars/all.yml   <-- and edit below v
-    bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
+
+    bootstrap_os: coreos
+    ansible_python_interpreter: "/opt/bin/python"    <-- remove comment char #
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
     cluster_name: cluster.local
 
@@ -68,18 +70,19 @@ Set ansible configuration with your key and inventory
 
 ```
 nano inventory/ansible.cfg
-  private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
-  remote_user=core
-  hostfile = ./inventory/inventory.cfg
-  [privilege_escalation]
-  become = yes
-  become_method = sudo
-  become_user = root
+
+private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
+remote_user=core
+hostfile = ./inventory/inventory.cfg
+[privilege_escalation]
+become = yes
+become_method = sudo
+become_user = root
 ```
 
 Then deploy k8s with ansible:
 
-ansible-playbook cluster.yml
+    ansible-playbook cluster.yml
 
 Run few times untils no more errors.
 
@@ -113,8 +116,8 @@ Please use the same version as server. You will be able to talk and pilot k8s wi
 
 ```
 mkdir kubectl
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-key.pem > kubectl/admin-key.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1.pem > kubectl/admin.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1-key.pem > kubectl/admin-key.pem
 ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
 ```
 
