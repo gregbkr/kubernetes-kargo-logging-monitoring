@@ -55,7 +55,7 @@ We are using the kargo great tool. Please clone in your repo
 First fill the inventory file with your node info
 
     cp inventory/inventory.example inventory/inventory.cfg
-    nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
+    nano inventory/inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
 
 **Deploy k8s**
 
