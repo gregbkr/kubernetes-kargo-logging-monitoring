@@ -75,7 +75,7 @@ Set ansible configuration with your key and inventory
 ```
 nano inventory/ansible.cfg
 
-private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
+private_key_file=~/.ssh/id_rsa_sbexx
 remote_user=core
 hostfile = ./inventory/inventory.cfg
 [privilege_escalation]
