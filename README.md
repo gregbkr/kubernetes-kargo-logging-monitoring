@@ -134,6 +134,7 @@ kubectl config set-credentials kadmin \
 kubectl config set-context kargo --cluster=kargo --user=kadmin
 kubectl config use-context kargo
 
+kubeclt version
 kubectl get node
 kubectl get all --all-namespaces
 ```
