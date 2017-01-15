@@ -514,13 +514,30 @@ fi
 Then logon and try again.
 
 ### If problem starting elasticsearch v5: (fix present in roles/k8s/templates/k8s-node.j2)
-- manually on all node: fix an issue with hungry es v5
+
+- fix with ansible:
+
+List:
+
+    cd kargo
+    ansible all -a "ls /etc/sysctl.d"
+
+Fix:
+
+    ansible all -m copy -a 'content=vm.max_map_count=262144 dest=/etc/sysctl.d/elasticsearch.conf'
+
+Reboot all minions:
+
+    ansible [node2-6] -a "sudo reboot"
+
+
+- Manually on all node:
 ```
 ssh -i ~/.ssh/id_rsa_foobar core@185.19.29.212
 sudo sysctl -w vm.max_map_count=262144
 ```
 
-- make it persistent:
+Make it persistent:
 ```
 sudo vi /etc/sysctl.d/elasticsearch.conf
 vm.max_map_count=262144
