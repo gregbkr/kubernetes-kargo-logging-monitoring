@@ -52,7 +52,13 @@ Please install with your preferered cloud provider, or on baremetal, basic lates
 
 ### 1.3 Deploy k8s
 
-We are using the kargo great tool. Please clone in your repo
+We are using the kargo powerful project. It is made of many ansible scripts to build your cloud and k8s on top.
+To pilot you can use:
+- Kargo-cli: which make even easier to provision servers (aws, cloustack) https://github.com/kubespray/kargo-cli 
+- Or fill 2 configuration files and run an ansible recipe
+
+Kargo-cli is being rebuilded in go, so I will just use the underlying ansible recipe at the moment.
+Please clone in your repo k8s:
 
     git clone https://github.com/kubernetes-incubator/kargo kargo && cd kargo
 
