@@ -72,6 +72,7 @@ First fill the inventory file with your node info
     nano inventory/group_vars/all.yml   <-- and edit below v
 
     bootstrap_os: coreos
+    kube_version: 1.4.7         <-- use 1.4.7 (stable and compatible for all components we install on top)
     ansible_python_interpreter: "/opt/bin/python"    <-- remove comment char #
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
     cluster_name: cluster.local
