@@ -45,6 +45,7 @@ This setup doesn't managed firewall rules yet.
 Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
 Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubeclt.
 Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
+If you need to implement firewall, a good start here: https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/blob/master/ansible/roles/k8s/tasks/create_secgroup_rules.yml
 
 **Coreos**
 
