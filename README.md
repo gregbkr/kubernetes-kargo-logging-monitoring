@@ -21,7 +21,7 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 Summary:
 
-[LoadBalancers](#LoadBalancers)
+[LoadBalancers](#5.-LoadBalancers)
 
 
 # 1. Deploy kubernetes
