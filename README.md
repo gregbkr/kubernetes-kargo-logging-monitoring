@@ -21,7 +21,7 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 Summary:
 
-[test](#1-test)
+[test](#test)
 
 
 # 1. Deploy kubernetes
