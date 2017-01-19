@@ -2,6 +2,9 @@
 
 ![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra1.JPG)
 
+
+[1. Deploy kubernetes](#1.-Deploy-kubernetes)
+
 ## What you will get:
 - Kargo: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
 - X number of master node running : k8s for container orchestration, it will pilot and gives work to the minions
@@ -21,8 +24,7 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 Summary:
 
-[1. Deploy kubernetes](#1-Deploy-kubernetes)
-[2. Deploy logging (efk) to collect k8s & containers events](#2-Deploy-logging-efk-to-collect-k8s-and-containers-events)
+
 
 # 1. Deploy kubernetes
 
