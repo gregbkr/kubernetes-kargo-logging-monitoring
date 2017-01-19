@@ -408,13 +408,13 @@ if you open influxdb deployment, you will notice that it is already configured f
 
 We mount in the container a folder physically on the node where the container runs. This data is persistent, so you can kill the container and restart it to get the data, as long as you don't change nodes. Could be good then to label one node to always deploy influxdb on the node where the data live.
 
-    kubectl label node your_static_influx_node role=influx
+    kubectl label node your_static_influx_node role=influxdb
     nano monitoring2/influxdb-deployment.yaml
 
 and use the tag below
 
     nodeSelector:
-    role: influx
+    role: influxdb
 
 The storage config:
 
@@ -438,7 +438,7 @@ You will have then to configure a storage server, it can be your ubuntu bastion 
 
 ```
 apt-get install nfs-kernel-server
-mkdir -p /export/influx /export/es
+mkdir -p /export/influxdb /export/es
 chmod -R 777 /export/
 nano /etc/default/nfs-kernel-server    <-- RPCSVCGSSDOPTS="no"
 ```
@@ -450,7 +450,7 @@ nano /etc/exports
   
 /export        *(rw,sync,crossmnt,no_subtree_check)
 /export/es     *(rw,sync,crossmnt,no_subtree_check)
-/export/influx *(rw,sync,crossmnt,no_subtree_check)
+/export/influxdb *(rw,sync,crossmnt,no_subtree_check)
 
 service nfs-kernel-server restart
 ```
@@ -466,7 +466,8 @@ Try it locally on bastion
 
 Test a mount on coreos client:
 
-    sudo mount --types nfs 185.19.29.253:/export /test/
+    sudo mount --types nfs 185.19.29.253:/export /test
+    ls -l /test
     sudo umount /test
   
 **k8s configuration**
@@ -481,7 +482,7 @@ nano monitoring2/influxdb-deployment.yaml
           #path: /srv/influxdb
         nfs:
           server: 185.19.29.253
-          path: /export/influx
+          path: /export/influxdb
 ```
 
 Deploy and check data are in nfs share:
