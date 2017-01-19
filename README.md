@@ -22,7 +22,7 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 Summary:
 
 [1. Deploy kubernetes](#1-Deploy kubernetes)
-[2. Deploy logging (efk) to collect k8s & containers events](2-Deploy-logging-(efk)-to-collect-k8s-&-containers-events)
+[2. Deploy logging (efk) to collect k8s & containers events](2-Deploy-logging-efk-to-collect-k8s-and-containers-events)
 
 # 1. Deploy kubernetes
 
@@ -165,7 +165,7 @@ If issues, see troubleshooting section.
 
 Do you want to migration k8s, add new node? Please see the annexes.
 
-# 2. Deploy logging (efk) to collect k8s & containers events
+# 2. Deploy logging efk to collect k8s and containers events
 	
 ### 2.1 Deploy elasticsearch, fluentd, kibana
 
