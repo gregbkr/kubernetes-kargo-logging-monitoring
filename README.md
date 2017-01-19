@@ -474,7 +474,7 @@ Test a mount on coreos client:
 
 ```
 nano monitoring2/influxdb-deployment.yaml
-	  nfs:
+
       volumes:
       - name: influxdb-storage
         #emptyDir: {}
