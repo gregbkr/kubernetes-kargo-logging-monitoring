@@ -21,16 +21,14 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 Summary:
 
-[test](#test)
-
+[1. Deploy kubernetes](#1-Deploy kubernetes)
+[2. Deploy logging (efk) to collect k8s & containers events](2-Deploy-logging-(efk)-to-collect-k8s-&-containers-events)
 
 # 1. Deploy kubernetes
 
 We will deploy a base k8s multi-master, etcd cluster, and dns support. You can modify the architecture depending on which values you will set later in inventory.cfg.
 
 ![k8s-kargo.PNG](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-kargo.PNG)
-
-# 1. test
 
 ### 1.1 Clone repo
 
