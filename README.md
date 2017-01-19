@@ -15,21 +15,22 @@
 - Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
 *Prerequisit:*
-- Kargo support many different type of cloud. I will show you the more broader way to build k8s by nore talking care of the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
+- Kargo support many different type of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
 Summary:
-[1. Deploy kubernetes](#1-deploy-kubernetes)
-[2. Deploy logging (efk) to collect k8s & containers events]()
-[3. Monitoring-services-and-containers](#3-monitoring-services-and-containers)
-[4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
-[5. LoadBalancers](#5-loadbalancers)
-[6. Data persistence](#6-data-persistence)
-[7. Secure your k8s access with certificates (optional demonstration)](#7-secure-your-k8s-access-with-certificates-optional-demonstration)
-[8. Troubleshooting](#8-troubleshooting)
-[9. Annexes](#9-annexes)
-[10. Future work](#10-future-work)
+
+- [1. Deploy kubernetes](#1-deploy-kubernetes)
+- [2. Deploy logging (efk) to collect k8s & containers events](#2-deploy-logging-efk-to-collect-k8s--containers-events)
+- [3. Monitoring-services-and-containers](#3-monitoring-services-and-containers)
+- [4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
+- [5. LoadBalancers](#5-loadbalancers)
+- [6. Data persistence](#6-data-persistence)
+- [7. Secure your k8s access with certificates (optional demonstration)](#7-secure-your-k8s-access-with-certificates-optional-demonstration)
+- [8. Troubleshooting](#8-troubleshooting)
+- [9. Annexes](#9-annexes)
+- [10. Future work](#10-future-work)
 
 
 # 1. Deploy kubernetes
