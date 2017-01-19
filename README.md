@@ -2,11 +2,6 @@
 
 ![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra1.JPG)
 
-
-[1. Deploy kubernetes](#1-deploy-kubernetes)
-
-https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/blob/master/README.md#1-deploy-kubernetes
-
 ## What you will get:
 - Kargo: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
 - X number of master node running : k8s for container orchestration, it will pilot and gives work to the minions
@@ -25,7 +20,16 @@ https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/blob/master/READM
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
 Summary:
-
+[1. Deploy kubernetes](#1-deploy-kubernetes)
+[2. Deploy logging (efk) to collect k8s & containers events]()
+[3. Monitoring-services-and-containers](#3-monitoring-services-and-containers)
+[4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
+[5. LoadBalancers](#5-loadbalancers)
+[6. Data persistence](#6-data-persistence)
+[7. Secure your k8s access with certificates (optional demonstration)](#7-secure-your-k8s-access-with-certificates-optional-demonstration)
+[8. Troubleshooting](#8-troubleshooting)
+[9. Annexes](#9-annexes)
+[10. Future work](#10-future-work)
 
 
 # 1. Deploy kubernetes
@@ -169,7 +173,7 @@ If issues, see troubleshooting section.
 
 Do you want to migration k8s, add new node? Please see the annexes.
 
-# 2. Deploy logging efk to collect k8s and containers events
+# 2. Deploy logging (efk) to collect k8s & containers events
 	
 ### 2.1 Deploy elasticsearch, fluentd, kibana
 
