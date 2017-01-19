@@ -19,6 +19,10 @@
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
+Summary:
+
+[LoadBalancers](#LoadBalancers)
+
 
 # 1. Deploy kubernetes
 
@@ -29,6 +33,7 @@ We will deploy a base k8s multi-master, etcd cluster, and dns support. You can m
 ### 1.1 Clone repo
 
     git clone https://github.com/gregbkr/kubernetes-kargo-logging-monitoring.git k8s && cd k8s
+
 
 ### 1.2 Deploy coreos nodes
 
