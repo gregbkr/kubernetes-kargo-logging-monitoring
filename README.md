@@ -23,7 +23,7 @@ Summary:
 
 - [1. Deploy kubernetes](#1-deploy-kubernetes)
 - [2. Deploy logging (efk) to collect k8s & containers events](#2-deploy-logging-efk-to-collect-k8s--containers-events)
-- [3. Monitoring-services-and-containers](#3-monitoring-services-and-containers)
+- [3. Monitoring services and containers](#3-monitoring-services-and-containers)
 - [4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
 - [5. LoadBalancers](#5-loadbalancers)
 - [6. Data persistence](#6-data-persistence)
