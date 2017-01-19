@@ -368,21 +368,21 @@ For service-loadbalancer, try to access new_lb_minion_ip:5601
 For trafik, add a dns A-record kibana.satoshi.tech --> new_lb_minion_ip so we will balance dns resolution to the old and new lb_node.
 Test some ping, and access kibana.satoshi.tech few times...	
 
-## 6. Data persistancy
+## 6. Data persistence
 In this setup, if you loose influxdb or elasticsearch containers, k8s will restart the container but you will loose the data.
-You got few option to make your data persistent:
+You got few options to make your data persistent:
 
 - Emptydir
 - Hostpath
 - Nfs
-- And many other solution like: glusterfs, ceph, ...
+- And many other solutions like: glusterfs, ceph, flocker, gcePersistentDisk, awsElasticBlockStore...
 
 I will demonstrate the first 3 solutions.
 More info on volume types: https://kubernetes.io/docs/user-guide/volumes/
 
 ### 6.1 EmptyDir
 
-if you open influxdb deployment, you will notice that it is already configured for "emptyDir". So if the container crash, and get restarted on the same node, your data will stay. But if you delete the container, or the reschedule happen on another node, you will loose the data.
+if you open influxdb deployment, you will notice that it is already configured for "emptyDir". So if the container crashes, and get restarted on the same node, your data will stay. But if you delete the container, or the reschedule happens on another node, you will loose the data.
 
     cat monitoring2/influxdb-deployment.yaml
       volumes:
@@ -392,22 +392,22 @@ if you open influxdb deployment, you will notice that it is already configured f
 	
 ### 6.2 HostPath
 
-We mount in the container a folder of the node running that container. This data is more persistent, so you can kill the container and restart it to get the data, as long as your don't change nodes. Could be good then to label one node to only deploy influx in the node where the data live.
+We mount in the container a folder physically on the node where the container runs. This data is persistent, so you can kill the container and restart it to get the data, as long as you don't change nodes. Could be good then to label one node to always deploy influxdb on the node where the data live.
 
     kubectl label node your_static_influx_node role=influx
     nano monitoring2/influxdb-deployment.yaml
 
-and use the tag below v
+and use the tag below
 
     nodeSelector:
-    role: loadbalancer
+    role: influx
 
 The storage config:
 
 ```
       volumes:
       - name: influxdb-storage
-#        emptyDir: {}
+        #emptyDir: {}
         hostPath:
           path: /srv/influxdb
 ```
@@ -417,7 +417,7 @@ ssh -i ~/.ssh/id_rsa_sbexx core@your_influx_node sudo ls /srv/influxdb
 
 ### 6.3 Nfs
 
-In order to not care about where containers run, nfs is able to store persistant data other the network. Data will not reside on node, but on a separate nfs server.
+In order to not care about where containers run, nfs is able to offer persistent data over the network. Data will not reside on node, but on a separate nfs server.
 
 **nfs storage server**
 You will have then to configure a storage server, it can be your ubuntu bastion to make tests easier:
@@ -462,9 +462,9 @@ nano monitoring2/influxdb-deployment.yaml
 	  nfs:
       volumes:
       - name: influxdb-storage
-#        emptyDir: {}
-#        hostPath:
-#          path: /srv/influxdb
+        #emptyDir: {}
+        #hostPath:
+          #path: /srv/influxdb
         nfs:
           server: 185.19.29.253
           path: /export/influx
@@ -475,8 +475,8 @@ Deploy and check data are in nfs share:
     ls -l /export/influx 
 
 You can now, stop the node where influx is running, wait k8s to reschedule your container to another node, and check again the data.
-
 Note: for elasticseach on nfs, I got that annoying "chown error" when trying to start the container. Need investigations.
+
 
 # 7. Secure your k8s access with certificates (optional demonstration)
 
