@@ -21,7 +21,7 @@ More info: you can find an overview of that setup on my blog: https://greg.satos
 
 Summary:
 
-[LoadBalancers](#5.-LoadBalancers)
+[test](#test)
 
 
 # 1. Deploy kubernetes
@@ -29,6 +29,8 @@ Summary:
 We will deploy a base k8s multi-master, etcd cluster, and dns support. You can modify the architecture depending on which values you will set later in inventory.cfg.
 
 ![k8s-kargo.PNG](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-kargo.PNG)
+
+# test
 
 ### 1.1 Clone repo
 
