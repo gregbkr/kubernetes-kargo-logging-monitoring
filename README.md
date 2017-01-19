@@ -855,7 +855,11 @@ Delete the corresponding namespace, all related containers/services will be dest
 
     kubectl delete namespace monitoring
     kubectl delete namespace logging
+    
+Object don't want to be delete (in status termination)?
 
+    kubectl delete namespace logging --grace-period=0 --force
+    kubectl delete po/node-directory-size-metrics-flbdp --namespace=monitoring  --grace-period=0 --force
 
 # 10. Future work
 
