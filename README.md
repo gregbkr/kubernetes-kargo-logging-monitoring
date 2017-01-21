@@ -294,7 +294,7 @@ If you are on aws or google cloud, these provider we automatically set a loadbal
 Create the load-balancer to be able to connect your service from the internet.
 Give 1 or more nodes the loadbalancer role:
 
-    kubectl label node 185.19.30.121 role=loadbalancer
+    kubectl label node node_name role=loadbalancer
     kubectl apply -f service-loadbalancer-daemonset.yaml
 
 *If you change the config, use "kubectl delete -f service-loadbalancer.yaml" to force a delete/create, then the discovery of the newly created service.
@@ -310,7 +310,7 @@ Add/remove services? please edit service-loadbalancer.yaml*
 
 ### 5.2 Traefik
 
-Any news services, exposed by *-ingress.yaml, will be caught by traefik and made available without restart.
+Any new services, exposed by *-ingress.yaml, will be caught by traefik and made available without restart.
 
 To experience the full power of traefik, please purchase a domain name (ex: satoshi.tech), and point that record to the node you choose to be the lb. This record will help create the automatic certificate via the acme standard.
 
@@ -332,7 +332,7 @@ Now you need to edit the configuration:
     nano traefik/traefik-daemonset.yaml
         [acme]   <-- set your data for auto certification
 
-Create the dynamic proxy to be able to connect your service from the internet.
+Label a minion as "loadbalancer" (see previous section) and create the dynamic proxy to be able to connect your service from the internet.
 
     kubectl apply -f traefik    <-- if error, probably because you didn't deploy other namespaces, so can ignore
     kubectl get all --all-namespaces  <-- if traefik pod can't get created, probably issue with port 443 on loadbalancer --> see troubleshooting section
