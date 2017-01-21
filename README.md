@@ -291,6 +291,8 @@ If you are on aws or google cloud, these provider we automatically set a loadbal
 
 ### 5.1 Service-loadbalancer
 
+--> Issue here: because Kargo now run an nginx proxy for kuberlet to api on all minions, port 443 is not available anymore for any lbs to listen public requests. Need to find a workaround.
+
 Create the load-balancer to be able to connect your service from the internet.
 Give 1 or more nodes the loadbalancer role:
 
