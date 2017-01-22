@@ -15,16 +15,34 @@
 - Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
 *Prerequisit:*
-- Kargo support many different type of cloud. I will show you the more broader way to build k8s by nore talking care of the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
-
+- Kargo support many different type of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
+Summary:
+
+- [1. Deploy kubernetes](#1-deploy-kubernetes)
+- [2. Deploy logging (efk) to collect k8s & containers events](#2-deploy-logging-efk-to-collect-k8s--containers-events)
+- [3. Monitoring services and containers](#3-monitoring-services-and-containers)
+- [4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
+- [5. LoadBalancers](#5-loadbalancers)
+- [6. Data persistence](#6-data-persistence)
+- [7. Secure your k8s access with certificates (optional demonstration)](#7-secure-your-k8s-access-with-certificates-optional-demonstration)
+- [8. Troubleshooting](#8-troubleshooting)
+- [9. Annexes](#9-annexes)
+- [10. Future work](#10-future-work)
+
+
 # 1. Deploy kubernetes
+
+We will deploy a base k8s multi-master, etcd cluster, and dns support. You can modify the architecture depending on which values you will set later in inventory.cfg.
+
+![k8s-kargo.PNG](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-kargo.PNG)
 
 ### 1.1 Clone repo
 
     git clone https://github.com/gregbkr/kubernetes-kargo-logging-monitoring.git k8s && cd k8s
+
 
 ### 1.2 Deploy coreos nodes
 
@@ -41,6 +59,7 @@ This setup doesn't managed firewall rules yet.
 Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
 Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubeclt.
 Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
+If you need to implement firewall, a good start here: https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/blob/master/ansible/roles/k8s/tasks/create_secgroup_rules.yml
 
 **Coreos**
 
@@ -48,19 +67,28 @@ Please install with your preferered cloud provider, or on baremetal, basic lates
 
 ### 1.3 Deploy k8s
 
-We are using the kargo great tool. Please clone in your repo
+We are using the kargo powerful project. It is made of many ansible scripts to build your cloud and k8s on top.
+To pilot you can use:
+- Kargo-cli: which make even easier to provision servers (aws, cloustack) https://github.com/kubespray/kargo-cli 
+- Or fill 2 configuration files and run an ansible recipe
 
-    git clone https://github.com/kubernetes-incubator/kargo kargo cd kargo
+Kargo-cli is being rebuilded in go, so I will just use the underlying ansible recipe at the moment.
+Please clone in your repo k8s:
+
+    git clone https://github.com/kubernetes-incubator/kargo kargo && cd kargo
 
 First fill the inventory file with your node info
 
     cp inventory/inventory.example inventory/inventory.cfg
-    nano inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
+    nano inventory/inventory.cfg      <-- add your nodes ip, and set how many master,etcd,minion you want
 
 **Deploy k8s**
 
     nano inventory/group_vars/all.yml   <-- and edit below v
-    bootstrap_os: coreos,  ansible_python_interpreter: "/opt/bin/python"
+
+    bootstrap_os: coreos
+    kube_version: 1.4.7         <-- use 1.4.7 (stable and compatible for all components we install on top)
+    ansible_python_interpreter: "/opt/bin/python"    <-- remove comment char #
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
     cluster_name: cluster.local
 
@@ -68,18 +96,19 @@ Set ansible configuration with your key and inventory
 
 ```
 nano inventory/ansible.cfg
-  private_key_file=~/.ssh/id_rsa_sbexx     <-- your key to access coreos nodes
-  remote_user=core
-  hostfile = ./inventory/inventory.cfg
-  [privilege_escalation]
-  become = yes
-  become_method = sudo
-  become_user = root
+
+private_key_file=~/.ssh/id_rsa_sbexx
+remote_user=core
+hostfile = ./inventory/inventory.cfg
+[privilege_escalation]
+become = yes
+become_method = sudo
+become_user = root
 ```
 
 Then deploy k8s with ansible:
 
-ansible-playbook cluster.yml
+    ansible-playbook cluster.yml
 
 Run few times untils no more errors.
 
@@ -113,8 +142,8 @@ Please use the same version as server. You will be able to talk and pilot k8s wi
 
 ```
 mkdir kubectl
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin.pem > kubectl/admin.pem
-ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-key.pem > kubectl/admin-key.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1.pem > kubectl/admin-node1.pem
+ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/admin-node1-key.pem > kubectl/admin-node1-key.pem
 ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem > kubectl/ca.pem
 ```
 
@@ -125,12 +154,13 @@ kubectl config set-cluster kargo --server=https://master1_ip --certificate-autho
 
 kubectl config set-credentials kadmin \
     --certificate-authority=kubectl/ca.pem \
-    --client-key=kubectl/admin-key.pem \
-    --client-certificate=kubectl/admin.pem  
+    --client-key=kubectl/admin-node1-key.pem \
+    --client-certificate=kubectl/admin-node1.pem  
 
 kubectl config set-context kargo --cluster=kargo --user=kadmin
 kubectl config use-context kargo
 
+kubeclt version
 kubectl get node
 kubectl get all --all-namespaces
 ```
@@ -261,10 +291,12 @@ If you are on aws or google cloud, these provider we automatically set a loadbal
 
 ### 5.1 Service-loadbalancer
 
+--> Issue here: because Kargo now run an nginx proxy for kuberlet to api on all minions, port 443 is not available anymore for any lbs to listen public requests. Need to find a workaround.
+
 Create the load-balancer to be able to connect your service from the internet.
 Give 1 or more nodes the loadbalancer role:
 
-    kubectl label node 185.19.30.121 role=loadbalancer
+    kubectl label node node_name role=loadbalancer
     kubectl apply -f service-loadbalancer-daemonset.yaml
 
 *If you change the config, use "kubectl delete -f service-loadbalancer.yaml" to force a delete/create, then the discovery of the newly created service.
@@ -280,7 +312,7 @@ Add/remove services? please edit service-loadbalancer.yaml*
 
 ### 5.2 Traefik
 
-Any news services, exposed by *-ingress.yaml, will be caught by traefik and made available without restart.
+Any new services, exposed by *-ingress.yaml, will be caught by traefik and made available without restart.
 
 To experience the full power of traefik, please purchase a domain name (ex: satoshi.tech), and point that record to the node you choose to be the lb. This record will help create the automatic certificate via the acme standard.
 
@@ -302,10 +334,12 @@ Now you need to edit the configuration:
     nano traefik/traefik-daemonset.yaml
         [acme]   <-- set your data for auto certification
 
-Create the dynamic proxy to be able to connect your service from the internet.
+Label a minion as "loadbalancer" (see previous section) and create the dynamic proxy to be able to connect your service from the internet.
 
     kubectl apply -f traefik    <-- if error, probably because you didn't deploy other namespaces, so can ignore
     kubectl get all --all-namespaces  <-- if traefik pod can't get created, probably issue with port 443 on loadbalancer --> see troubleshooting section
+    
+--> Issue here: because Kargo now run an nginx proxy for kuberlet to api on all minions, port 443 is not available anymore for any lbs to listen public requests. Need to find a workaround. You can remove the port 443, and just use 80 for the moment.
 
 **Access services**
 If set in traefik, please use login/pass: test/test
@@ -352,8 +386,118 @@ For service-loadbalancer, try to access new_lb_minion_ip:5601
 For trafik, add a dns A-record kibana.satoshi.tech --> new_lb_minion_ip so we will balance dns resolution to the old and new lb_node.
 Test some ping, and access kibana.satoshi.tech few times...	
 
+## 6. Data persistence
+In this setup, if you loose influxdb or elasticsearch containers, k8s will restart the container but you will loose the data.
+You got few options to make your data persistent:
 
-# 6. Secure your k8s access with certificates (optional demonstration)
+- Emptydir
+- Hostpath
+- Nfs
+- And many other solutions like: glusterfs, ceph, flocker, gcePersistentDisk, awsElasticBlockStore...
+
+I will demonstrate the first 3 solutions.
+More info on volume types: https://kubernetes.io/docs/user-guide/volumes/
+
+### 6.1 EmptyDir
+
+if you open influxdb deployment, you will notice that it is already configured for "emptyDir". So if the container crashes, and get restarted on the same node, your data will stay. But if you delete the container, or the reschedule happens on another node, you will loose the data.
+
+    cat monitoring2/influxdb-deployment.yaml
+      volumes:
+      - name: influxdb-storage
+        emptyDir: {}
+        
+	
+### 6.2 HostPath
+
+We mount in the container a folder physically on the node where the container runs. This data is persistent, so you can kill the container and restart it to get the data, as long as you don't change nodes. Could be good then to label one node to always deploy influxdb on the node where the data live.
+
+    kubectl label node your_static_influx_node role=influxdb
+    nano monitoring2/influxdb-deployment.yaml
+
+and use the tag below
+
+    nodeSelector:
+    role: influxdb
+
+The storage config:
+
+```
+      volumes:
+      - name: influxdb-storage
+        #emptyDir: {}
+        hostPath:
+          path: /srv/influxdb
+```
+
+Check the data are indeed on the host:
+ssh -i ~/.ssh/id_rsa_sbexx core@your_influx_node sudo ls /srv/influxdb
+
+### 6.3 Nfs
+
+In order to not care about where containers run, nfs is able to offer persistent data over the network. Data will not reside on node, but on a separate nfs server.
+
+**nfs storage server**
+You will have then to configure a storage server, it can be your ubuntu bastion to make tests easier:
+
+```
+apt-get install nfs-kernel-server
+mkdir -p /export/influxdb /export/es
+chmod -R 777 /export/
+nano /etc/default/nfs-kernel-server    <-- RPCSVCGSSDOPTS="no"
+```
+  
+Configure rights (we leave it very open, but please restrict everything for prod)
+
+```  
+nano /etc/exports
+  
+/export        *(rw,sync,crossmnt,no_subtree_check)
+/export/es     *(rw,sync,crossmnt,no_subtree_check)
+/export/influxdb *(rw,sync,crossmnt,no_subtree_check)
+
+service nfs-kernel-server restart
+```
+
+**Nfs client**
+
+Try it locally on bastion
+
+    apt-get install nfs-common 
+    mkdir /mnt/nfs
+    mount -t nfs -o proto=tcp,port=2049 185.19.29.253:/export /mnt/nfs
+    ls -l /mnt/nfs
+
+Test a mount on coreos client:
+
+    sudo mount --types nfs 185.19.29.253:/export /test
+    ls -l /test
+    sudo umount /test
+  
+**k8s configuration**
+
+```
+nano monitoring2/influxdb-deployment.yaml
+
+      volumes:
+      - name: influxdb-storage
+        #emptyDir: {}
+        #hostPath:
+          #path: /srv/influxdb
+        nfs:
+          server: 185.19.29.253
+          path: /export/influxdb
+```
+
+Deploy and check data are in nfs share:
+
+    ls -l /export/influx 
+
+You can now, stop the node where influx is running, wait k8s to reschedule your container to another node, and check again the data.
+Note: for elasticseach on nfs, I got that annoying "chown error" when trying to start the container. Need investigations.
+
+
+# 7. Secure your k8s access with certificates (optional demonstration)
 
 kubectl pilot k8s via the api server already on a secured port 443 in https.
 We will now create a certicate autority, to issue a certificate for the api, and for your admin client, to get even higher level of authentification.
@@ -490,7 +634,7 @@ Try
 
 *All services (kube-proxy, kube-client, kube-controller) can be set to use certificate. But this is a subject for another setup.*
 
-# 7. Troubleshooting
+# 8. Troubleshooting
 
 ### Kubectl autocompletion not working
 
@@ -506,13 +650,30 @@ fi
 Then logon and try again.
 
 ### If problem starting elasticsearch v5: (fix present in roles/k8s/templates/k8s-node.j2)
-- manually on all node: fix an issue with hungry es v5
+
+- fix with ansible:
+
+List:
+
+    cd kargo
+    ansible all -a "ls /etc/sysctl.d"
+
+Fix:
+
+    ansible all -m copy -a 'content=vm.max_map_count=262144 dest=/etc/sysctl.d/elasticsearch.conf'
+
+Reboot all minions:
+
+    ansible [node2-6] -a "sudo reboot"
+
+
+- Manually on all node:
 ```
 ssh -i ~/.ssh/id_rsa_foobar core@185.19.29.212
 sudo sysctl -w vm.max_map_count=262144
 ```
 
-- make it persistent:
+Make it persistent:
 ```
 sudo vi /etc/sysctl.d/elasticsearch.conf
 vm.max_map_count=262144
@@ -587,7 +748,7 @@ Then delete and recreate traefik, should be all good.
     apt install httpie
     http --verify=no --auth test:test https://kibana.satoshi.tech -v
 
-# 8. Annexes
+# 9. Annexes
 
 ### Shell Alias for K8s
 ```
@@ -682,10 +843,12 @@ To complete...
 **Restore namespaces and services on a new fresh k8s**
 
 Namespaces:
-  kubectl create -f dump/ns.json
+
+    kubectl create -f dump/ns.json
 
 Resources state:
-  kubectl create -f dump/cluster-dump.json
+
+    kubectl create -f dump/cluster-dump.json
 	
 You will have to reimport db dump or flat data on host folder if you had persistent data.
 
@@ -696,9 +859,15 @@ Delete the corresponding namespace, all related containers/services will be dest
 
     kubectl delete namespace monitoring
     kubectl delete namespace logging
+    
+Object don't want to be delete (in status termination)?
 
-# 9. Future work
+    kubectl delete namespace logging --grace-period=0 --force
+    kubectl delete po/node-directory-size-metrics-flbdp --namespace=monitoring  --grace-period=0 --force
 
-- Use different firewalls security group: k8s, k8s-dmz, k8s-master, to be ready for production
+# 10. Future work
+
+- Use firewalls security group: k8s, k8s-dmz, k8s-master, to be ready for production
 - Use persistent data for Elasticsearch and prometheus
 - Fix prometheus k8s_pod scraping both port 80 and 9102...
+- Backup etcd error follow up
