@@ -340,7 +340,6 @@ Label a minion as "loadbalancer" (see previous section) and create the dynamic p
     kubectl apply -f traefik    <-- if error, probably because you didn't deploy other namespaces, so can ignore
     kubectl get all --all-namespaces  <-- if traefik pod can't get created, probably issue with port 443 on loadbalancer --> see troubleshooting section
     
---> Issue here: because Kargo now run an nginx proxy for kuberlet to api on all minions, port 443 is not available anymore for any lbs to listen public requests. Need to find a workaround. You can remove the port 443, and just use 80 for the moment.
 
 **Access services**
 If set in traefik, please use login/pass: test/test
