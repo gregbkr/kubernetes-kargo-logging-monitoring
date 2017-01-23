@@ -90,6 +90,7 @@ First fill the inventory file with your node info
     kube_version: 1.4.7         <-- use 1.4.7 (stable and compatible for all components we install on top)
     ansible_python_interpreter: "/opt/bin/python"    <-- remove comment char #
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
+    kube_apiserver_port: 8443       <-- we use 8443 so 443 is free for deploying lb later on one node
     cluster_name: cluster.local
 
 Set ansible configuration with your key and inventory
@@ -150,7 +151,7 @@ ssh -i ~/.ssh/id_rsa_sbexx core@master1_ip sudo cat /etc/kubernetes/ssl/ca.pem >
 **Configure kubectl**
 
 ```
-kubectl config set-cluster kargo --server=https://master1_ip --certificate-authority=kubectl/ca.pem
+kubectl config set-cluster kargo --server=https://master1_ip:8443 --certificate-authority=kubectl/ca.pem
 
 kubectl config set-credentials kadmin \
     --certificate-authority=kubectl/ca.pem \
