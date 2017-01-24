@@ -48,7 +48,7 @@ We will deploy a base k8s multi-master, etcd cluster, and dns support. You can m
 
 **Bastion**
 
-An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubeclt.
+An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubectl.
 You need latest version of ansible. You need Netaddr too: 
 
     pip install netaddr
@@ -57,7 +57,7 @@ You need latest version of ansible. You need Netaddr too:
 
 This setup doesn't managed firewall rules yet.
 Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
-Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubeclt.
+Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubectl.
 Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
 If you need to implement firewall, a good start here: https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/blob/master/ansible/roles/k8s/tasks/create_secgroup_rules.yml
 
@@ -130,7 +130,7 @@ ansible node1 -a 'update_engine_client -update'
 
 ### 1.4 Install kubectl
 
-Kubeclt is your admin local client to pilot the k8s cluster. One version of kubectl is already present on master, but it is better to have it locally, on your admin/bastion.
+Kubectl is your admin local client to pilot the k8s cluster. One version of kubectl is already present on master, but it is better to have it locally, on your admin/bastion.
 Please use the same version as server. You will be able to talk and pilot k8s with this tool.
 
 **Get kubectl**
@@ -161,7 +161,7 @@ kubectl config set-credentials kadmin \
 kubectl config set-context kargo --cluster=kargo --user=kadmin
 kubectl config use-context kargo
 
-kubeclt version
+kubectl version
 kubectl get node
 kubectl get all --all-namespaces
 ```
@@ -169,7 +169,7 @@ kubectl get all --all-namespaces
 **Autocompletion**
 
     source <(kubectl completion bash)
-    kubeclt get nod +[TAB]
+    kubectl get nod +[TAB]
 
 If issues, see troubleshooting section.
 
@@ -360,7 +360,7 @@ These lb nodes are some kind of DMZ servers where you could balance later your D
 For production environment, I would recommend that only DMZ services (service-loadbalancer, traefik, nginx, ...) could run in here, because these servers will apply some less restrictive firewall rules (ex: open 80, 433, 5601, 3000) than other minion k8s nodes. 
 So I would create a second security group (sg): k8s-dmz with same rules as k8s, and rules between both zone, so k8s services can talk to  k8s and k8s-dmz. Then open 80, 433, 5601, 3000 for k8s-dmz only. Like this, k8s sg still protect more sensitive containers from direct public access/scans.
 
-The same applies for the master node. I would create a new sg for it: k8s-master, so only this group will permit access from kubeclt (port 80, 443).
+The same applies for the master node. I would create a new sg for it: k8s-master, so only this group will permit access from kubectt (port 80, 443).
 
 Then you should remove all NodePort from the services configuration, so no service will be available when scanning a classic minion. For that please comment the section "# type: NodePort" for all *-service.yaml
 
@@ -372,7 +372,7 @@ Use ansible to add a node
 
     nano ansible/k8s.yml     <-- edit:  k8s_num_nodes: 3
     ansible-playbook ansible/k8s.yml
-    kubeclt get node         <-- wait for it!
+    kubectl get node         <-- wait for it!
 	
 Label it as a loadbalancer node
 
@@ -541,7 +541,7 @@ kube-apiserver-server-csr.json | cfssljson -bare master/kube-apiserver-server
 
     cp ca/ca.pem master
 
-**Create kubeclt client cert**
+**Create kubectl client cert**
 
 ```
 cfssl gencert \
