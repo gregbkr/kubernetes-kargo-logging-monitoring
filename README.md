@@ -92,6 +92,10 @@ First fill the inventory file with your node info
     # Users to create for basic auth in Kubernetes API via HTTP   <-- edit passwords
     kube_apiserver_port: 8443       <-- we use 8443 so 443 is free for deploying lb later on one node
     cluster_name: cluster.local
+    
+Note: You can also modifiy **nginx_kube_apiserver_port** instead of **kube_apiserver_port** to something other than 443
+to enable loadbalancers as well.  This would leave the API server running on port 443 but the internal proxy would be on 
+a different port.
 
 Set ansible configuration with your key and inventory
 
@@ -292,7 +296,8 @@ If you are on aws or google cloud, these provider we automatically set a loadbal
 
 ### 5.1 Service-loadbalancer
 
---> Issue here: because Kargo now run an nginx proxy for kuberlet to api on all minions, port 443 is not available anymore for any lbs to listen public requests. Need to find a workaround.
+Because Kargo runs an nginx proxy for kubelet to access the api on all minions, port 443 is not available for any lbs to listen for public requests by default.  You should change either the **kube_apiserver_port** or **nginx_kube_apiserver_port**
+options describe in configuring Kargo above.
 
 Create the load-balancer to be able to connect your service from the internet.
 Give 1 or more nodes the loadbalancer role:
