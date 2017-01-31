@@ -15,7 +15,7 @@
 - Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
 *Prerequisit:*
-- Kargo support many different type of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give to kargo somes coreos OS: IP, and ssh access.
+- Kargo support many different types of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give to kargo some coreos hosts: IP, and ssh access.
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
