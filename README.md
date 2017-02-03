@@ -25,12 +25,14 @@ Summary:
 - [2. Deploy logging (efk) to collect k8s & containers events](#2-deploy-logging-efk-to-collect-k8s--containers-events)
 - [3. Monitoring services and containers](#3-monitoring-services-and-containers)
 - [4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
-- [5. LoadBalancers](#5-loadbalancers)
-- [6. Data persistence](#6-data-persistence)
-- [7. Secure your k8s access with certificates (optional demonstration)](#7-secure-your-k8s-access-with-certificates-optional-demonstration)
-- [8. Troubleshooting](#8-troubleshooting)
-- [9. Annexes](#9-annexes)
-- [10. Future work](#10-future-work)
+- [5. Docker private registry addon](#5-Docker-private-registry-addon)
+- [6. Gitlab for CI & CD](#6-Gitlab-for-CI--CD)
+- [7. LoadBalancers](#7-loadbalancers)
+- [8. Data persistence](#8-data-persistence)
+- [9. Secure your k8s access with certificates (optional demonstration)](#9-secure-your-k8s-access-with-certificates-optional-demonstration)
+- [10. Troubleshooting](#10-troubleshooting)
+- [11. Annexes](#11-annexes)
+- [12. Future work](#12-future-work)
 
 
 # 1. Deploy kubernetes
@@ -288,13 +290,17 @@ Access GUI: http://any_minion_node_ip:30999
 
 ![kubernetes-dashboard.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/kubernetes-dashboard-addon.JPG)
 
-# 5. LoadBalancers
+# 5. Docker private registry addon
+
+# 6. Gitlab for CI & CD
+
+# 7. LoadBalancers
 
 If you are on aws or google cloud, these provider we automatically set a loadbalancer matching the *-ingress.yaml configuration. For all other cloud provider and baremetal, you will have to take care of that step. Luckyly, I will present you two types of loadlancer below ;-)
 - service-loadbalancer (static haproxy) https://github.com/kubernetes/contrib/tree/master/service-loadbalancer
 - traefik (dynamic proxy) https://github.com/containous/traefik
 
-### 5.1 Service-loadbalancer
+### 7.1 Service-loadbalancer
 
 Because Kargo runs an nginx proxy for kubelet to access the api on all minions, port 443 is not available for any lbs to listen for public requests by default.  You should change either the **kube_apiserver_port** or **nginx_kube_apiserver_port**
 options describe in configuring Kargo above.
@@ -316,7 +322,7 @@ Add/remove services? please edit service-loadbalancer.yaml*
 - grafana2 (monitoring2): http://lb_node_ip:3002
 - kubernetes-dashboard: http://lb_node_ip:9999
 
-### 5.2 Traefik
+### 7.2 Traefik
 
 Any new services, exposed by *-ingress.yaml, will be caught by traefik and made available without restart.
 
@@ -359,7 +365,7 @@ You can use http or https
 
 ![traefik.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/traefik.JPG)
 
-### 5.3 Security considerations
+### 7.3 Security considerations
 
 These lb nodes are some kind of DMZ servers where you could balance later your DNS queries.
 For production environment, I would recommend that only DMZ services (service-loadbalancer, traefik, nginx, ...) could run in here, because these servers will apply some less restrictive firewall rules (ex: open 80, 433, 5601, 3000) than other minion k8s nodes. 
@@ -369,7 +375,7 @@ The same applies for the master node. I would create a new sg for it: k8s-master
 
 Then you should remove all NodePort from the services configuration, so no service will be available when scanning a classic minion. For that please comment the section "# type: NodePort" for all *-service.yaml
 
-### 5.4 Scaling loadbalancers
+### 7.4 Scaling loadbalancers
 
 Add more loadbalancers, by adding more loadbalancers nodes. Because we use Daemonset type of job, all new nodes tagged with loadbalancer will spawn a loadbalancer container.
 
@@ -391,7 +397,7 @@ For service-loadbalancer, try to access new_lb_minion_ip:5601
 For trafik, add a dns A-record kibana.satoshi.tech --> new_lb_minion_ip so we will balance dns resolution to the old and new lb_node.
 Test some ping, and access kibana.satoshi.tech few times...	
 
-## 6. Data persistence
+## 8. Data persistence
 In this setup, if you loose influxdb or elasticsearch containers, k8s will restart the container but you will loose the data.
 You got few options to make your data persistent:
 
@@ -403,7 +409,7 @@ You got few options to make your data persistent:
 I will demonstrate the first 3 solutions.
 More info on volume types: https://kubernetes.io/docs/user-guide/volumes/
 
-### 6.1 EmptyDir
+### 8.1 EmptyDir
 
 if you open influxdb deployment, you will notice that it is already configured for "emptyDir". So if the container crashes, and get restarted on the same node, your data will stay. But if you delete the container, or the reschedule happens on another node, you will loose the data.
 
@@ -413,7 +419,7 @@ if you open influxdb deployment, you will notice that it is already configured f
         emptyDir: {}
         
 	
-### 6.2 HostPath
+### 8.2 HostPath
 
 We mount in the container a folder physically on the node where the container runs. This data is persistent, so you can kill the container and restart it to get the data, as long as you don't change nodes. Could be good then to label one node to always deploy influxdb on the node where the data live.
 
@@ -438,7 +444,7 @@ The storage config:
 Check the data are indeed on the host:
 ssh -i ~/.ssh/id_rsa_sbexx core@your_influx_node sudo ls /srv/influxdb
 
-### 6.3 Nfs
+### 8.3 Nfs
 
 In order to not care about where containers run, nfs is able to offer persistent data over the network. Data will not reside on node, but on a separate nfs server.
 
@@ -502,7 +508,7 @@ You can now, stop the node where influx is running, wait k8s to reschedule your 
 Note: for elasticseach on nfs, I got that annoying "chown error" when trying to start the container. Need investigations.
 
 
-# 7. Secure your k8s access with certificates (optional demonstration)
+# 9. Secure your k8s access with certificates (optional demonstration)
 
 kubectl pilot k8s via the api server already on a secured port 443 in https.
 We will now create a certicate autority, to issue a certificate for the api, and for your admin client, to get even higher level of authentification.
@@ -639,7 +645,7 @@ Try
 
 *All services (kube-proxy, kube-client, kube-controller) can be set to use certificate. But this is a subject for another setup.*
 
-# 8. Troubleshooting
+# 10. Troubleshooting
 
 ### Kubectl autocompletion not working
 
@@ -753,7 +759,7 @@ Then delete and recreate traefik, should be all good.
     apt install httpie
     http --verify=no --auth test:test https://kibana.satoshi.tech -v
 
-# 9. Annexes
+# 11. Annexes
 
 ### Shell Alias for K8s
 ```
@@ -870,7 +876,7 @@ Object don't want to be delete (in status termination)?
     kubectl delete namespace logging --grace-period=0 --force
     kubectl delete po/node-directory-size-metrics-flbdp --namespace=monitoring  --grace-period=0 --force
 
-# 10. Future work
+# 12. Future work
 
 - Use firewalls security group: k8s, k8s-dmz, k8s-master, to be ready for production
 - Use persistent data for Elasticsearch and prometheus
