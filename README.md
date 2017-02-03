@@ -11,6 +11,8 @@
 - Prometheus will monitoring all this infra, with grafana dashbaord
 - Heapster is an alternative for monitoring your k8s cluster
 - K8s dashboard addon (not efk dashboard), where you can visualize k8s component in a GUI
+- Registry: a private docker registry deployed in the k8s cluster
+- Gitlab: a full example of continuous integration and continuous delivery of a simple app, in k8s
 - Service-loadbalancer (static haproxy): which is the public gateway to access your internal k8s services (kibana, grafana)
 - Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
