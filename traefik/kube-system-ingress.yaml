@@ -20,4 +20,9 @@ spec:
           - backend:
               serviceName: traefik-console
               servicePort: 8080
-
+    - host: registry.satoshi.tech
+      http:
+        paths:
+          - backend:
+              serviceName: registry
+              servicePort: 5000
