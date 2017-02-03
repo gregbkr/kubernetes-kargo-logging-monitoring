@@ -367,14 +367,14 @@ Create the runner cache folder
 
 Register a runner to gitlab:
 
-    kubectl run -it runner-registrator --image=gitlab/gitlab-runner:v1.5.2 --restart=Never -- register 
+    kubectl run -it runner-registrator --image=gitlab/gitlab-runner:v1.5.2 --restart=Never -- register
   
 Answer the questions:
 ```
 Gitlab-ci coordinator URL: http://gitlab.gitlab/ci
 Registration token: [Find it in: gitlab GUI > setting > Runners > Use the following registration token during setup...]
 Description: gitlab-docker-runner 
-Tag: shared,specific
+Tags: shared,specific
 Executor: docker
 Default docker image: python:3.5.1
 ```
@@ -383,12 +383,11 @@ Delete that temp container:
 
     kubectl delete po/runner-registrator
 
-Edit your final runner config
+Edit your final runner config and replace:
 ```  
 nano gitlab/gitlab-runner/gitlab-runner-docker-configmap.yml  
-And replace:
-Token: [login gitlab > setting > Runners > clic on the pencil/notepad icon]
-AccessKey and SecretKey: [find the in the logs of minio container]
+- Token: [login gitlab > setting > Runners > clic on the pencil/notepad icon]
+- AccessKey and SecretKey: [find the in the logs of minio container]
 kubectl logs -f minio-1144410361-pr5ym --namespace=gitlab
 ```
 
@@ -398,18 +397,18 @@ Deploy runner
 
 **Gitlab CI and CD**
 
-We will now test a full continuous integration (docker build + test of a simple flask app saying helloworld) and a simplified continuous deployment (redeploy the flask container in k8s)
+We will now test a full continuous integration (docker build + test of a simple flask app saying helloworld) and a simplified continuous deployment (redeploy the flask container in k8s, on staging and prod, which are the same k8s)
 
 For CD, your runner will need access to k8s, so bring over to the ci folder the kubectl certificates 
 (for production, please be careful when sharing certificates in repo)
 
-    cp kargo/kubectl gitlab/ci/.
+    cp -r kargo/kubectl gitlab/ci/.
     cd gitlab/ci
 
-Create a repo in gitlab GUI, and link the ci folder to that repo, such as mine:
+Create a repo (k8s-ci) in gitlab GUI, and link the ci folder to that repo, such as mine:
 
     git init 
-    git remote add origin http://gitlab.satoshi.tech/root/k8-ci.git  
+    git remote add origin http://gitlab.satoshi.tech/root/k8s-ci.git
 
 Then edit the gitlab-ci config
 
@@ -419,17 +418,18 @@ Then edit the gitlab-ci config
 
 And push:
 
-    git commit -am 'test ci'
-    git push
+    git add -A
+    git commit -m 'test ci'
+    git push --set-upstream origin master
 
-Go to gitlab to check pipeline and the status. If you have some error, remove most part of gitlab-ci.yml and try again.
+Go to gitlab to check pipeline and the status. If you have some error, try to hit the retry button. Or remove most part of gitlab-ci.yml and try again.
 
-Check the app to get the hellowork message:
+Check the app to get the "hello world" message:
 
     curl a_node_ip:30555    or
     kubectl exec -it ubuntu --namespace=kube-system -- curl flask.default:5000
 
-At the end, you should be able to edit app.py to say "helloworld 2!", push the code, and see/curl the result later when the pipeline is finished!
+At the end, you should be able to edit app.py to say "helloworld 3!", push the code, and see/curl the result later when the pipeline is finished!
 
 # 7. LoadBalancers
 
