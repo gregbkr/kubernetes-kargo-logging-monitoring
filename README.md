@@ -309,16 +309,22 @@ In order to target the registry from outside, or within k8s, please setup traefi
 Then add ingress config so traefik are aware of registry service:
 
     kubectl apply -f traefik/kube-system-ingress.yaml
-  
-Check service access on one node or from anywhere
+
+    kubectl get svc --namespace=kube-system 
+
+Get the ip of the service, and check service access from one node
 
     curl 10.233.5.205:5000/v2/_catalog
-    curl registry.satoshi.tech/v2/_catalog
-
+    {"repositories":[]}      <-- result
+    
 Or from the ubuntu image:
 
     kubectl exec -it ubuntu --namespace=kube-system -- curl registry.kube-system:5000/v2/_catalog
     kubectl exec -it ubuntu --namespace=kube-system -- curl registry.satoshi.tech/v2/_catalog
+
+or from anywhere
+
+    curl registry.satoshi.tech/v2/_catalog
 
 Add an image to private registry
 
@@ -328,17 +334,26 @@ Add an image to private registry
 
 # 6. Gitlab for CI & CD
 
-This setup is based on the great blog of [lwolf](http://blog.lwolf.org/post/how-to-easily-deploy-gitlab-on-kubernetes/)
+This setup is based on the great blog of [lwolfs](http://blog.lwolf.org/post/how-to-easily-deploy-gitlab-on-kubernetes/)
 
+First please edit gitlab config:
+
+    nano gitlab/gitlab/gitlab-deployment.yml
+    - GITLAB_ROOT_PASSWORD (if you want to change pwd)
+    - name: GITLAB_ROOT_EMAIL
+    - name: GITLAB_HOST
+    - name: GITLAB_SSH_HOST
+    
 Deploy gitlab
 
     kubectl apply -f gitlab/gitlab
+    kubectl get all --namespace=gitlab     <-- wait pods to be ready
 
-Use traefic as a loadbalancer (see lb section), create a dns record (ex: gitlab.satoshi.tech) and deploy the relate ingress:
+Use traefic as a loadbalancer (see lb section), create a dns record pointing to your lb_node (ex: gitlab.satoshi.tech) and deploy the relate ingress:
 
     kubectl apply -f traefik/gitlab-ingress.yaml
 
-You should be able to access gitlab with Login:root/rootpassword 
+You should be able to access gitlab with (login:root/rootpassword)
 http://gitlab.satoshi.tech or http://a_minion_ip:30088
 
 Setup the cache server for docker runner builds
