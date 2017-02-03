@@ -365,7 +365,8 @@ Default docker image: python:3.5.1
 ```
 
 Delete that temp container:
-  kubectl delete po/runner-registrator
+
+    kubectl delete po/runner-registrator
 
 Edit your final runner config
 ```  
@@ -380,34 +381,40 @@ Deploy runner
 
     kubectl apply -f gitlab/gitlab-runner
 
-**Gitlab CD and CI**
+**Gitlab CI and CD**
 
-Configure a repo & add your kubectl access to that repo (for production, please do not share your certificates on a public repo)
+We will now test a full continuous integration (docker build + test of a simple flask app saying helloworld) and a simplified continuous deployment (redeploy the flask container in k8s)
 
-    cp arg0/kubectl gitlab/ci/.
+For CD, your runner will need access to k8s, so bring over to the ci folder the kubectl certificates 
+(for production, please be careful when sharing certificates in repo)
+
+    cp kargo/kubectl gitlab/ci/.
     cd gitlab/ci
 
-Here you need this repo targeting your gitlab, such as mine:
-  git init 
-  git remote add origin http://gitlab.satoshi.tech/root/k8-ci.git  
+Create a repo in gitlab GUI, and link the ci folder to that repo, such as mine:
+
+    git init 
+    git remote add origin http://gitlab.satoshi.tech/root/k8-ci.git  
 
 Then edit the gitlab-ci config
-  nano .gitlab-ci.yml
-    - your docker repo registry and name (I stayed on default dockerhub)
+
+    nano .gitlab-ci.yml
+    - your docker repo registry and name (I stayed on default dockerhub.com)
     - your k8s master ip
 
 And push:
-  git commit -am 'test'
-  git push
 
-Go to gitlab to check pipeline and the status.
+    git commit -am 'test ci'
+    git push
 
-Check the app:
-curl 185.19.28.220:30555
+Go to gitlab to check pipeline and the status. If you have some error, remove most part of gitlab-ci.yml and try again.
 
-At the end, you should be able to edit app.py, push the code, and see the result later when the pipeline is finished.
+Check the app to get the hellowork message:
 
+    curl a_node_ip:30555    or
+    kubectl exec -it ubuntu --namespace=kube-system -- curl flask.default:5000
 
+At the end, you should be able to edit app.py to say "helloworld 2!", push the code, and see/curl the result later when the pipeline is finished!
 
 # 7. LoadBalancers
 
