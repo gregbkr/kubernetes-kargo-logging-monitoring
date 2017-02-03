@@ -5,7 +5,7 @@ metadata:
   name: elasticsearch
   namespace: logging
   labels:
-    app: elastcisearch
+    app: elasticsearch
 spec:
   replicas: 1
   template:
@@ -23,4 +23,23 @@ spec:
         env:
         - name: ES_JAVA_OPTS
           value: "-Xms1g -Xmx1g"
-
+        volumeMounts:
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+      - name: es-data
+        persistentVolumeClaim:
+          claimName: es-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: es-pv-claim
+  labels:
+    app: elasticsearch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
