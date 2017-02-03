@@ -31,16 +31,16 @@ spec:
           value: nXJJ358Qnci0yF9qpAsLrF2vImaoFR03
 
         - name: GITLAB_ROOT_PASSWORD
-          value: root
+          value: rootpassword
         - name: GITLAB_ROOT_EMAIL
-          value: root@example.com
+          value: root@satoshi.tech
 
         - name: GITLAB_HOST
-          value: git.example.com
+          value: gitlab.satoshi.tech
         - name: GITLAB_PORT
           value: "80"
         - name: GITLAB_SSH_HOST
-          value: "ssh-git.example.com"
+          value: "ssh-gitlab.satoshi.tech"
         - name: GITLAB_SSH_PORT
           value: "1022"
 

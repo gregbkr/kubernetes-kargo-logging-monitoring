@@ -11,7 +11,7 @@ data:
     [[runners]]
       name = "gitlab-docker-runner"
       url = "http://gitlab.gitlab/ci"
-      token = "a2c668d104311cac37c5615701f9e9"
+      token = "054e7f268a1a11a77cd1d116770cbc"
       executor = "docker"
       [runners.docker]
         tls_verify = false
@@ -22,6 +22,6 @@ data:
       [runners.cache]
         Type = "s3"
         ServerAddress = "http://minio.gitlab/"
-        AccessKey = "NAQDF9PGV6IN6OUA1AWQ"
-        SecretKey = "aqaDEnG1bMHJ9y4L3KjstZzMcG9d7vRgSJg28B1X"
+        AccessKey = "YVC2Z5XE20D9Y43HL7TI"
+        SecretKey = "tRKQjEyL1e3Nv3QbpjklaLJNa/NfNyy/V5cXG3Dv"
         BucketName = "runner"
