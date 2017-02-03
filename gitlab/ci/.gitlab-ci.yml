@@ -1,0 +1,57 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+- build_test_release
+- deploy_staging
+- deploy_prod
+
+variables:
+  CONTAINER_TEST_IMAGE: gregbkr/flask_test
+  CONTAINER_RELEASE_IMAGE: gregbkr/flask
+
+before_script:
+  - docker login -u gregbkr -p Geneva2017$
+
+build_test_release:
+  stage: build_test_release
+  script:
+    - docker build --pull -t $CONTAINER_TEST_IMAGE flask/src
+    - docker push $CONTAINER_TEST_IMAGE
+    - docker run --name=flask -d -p 5000:5000 $CONTAINER_TEST_IMAGE
+    - docker run -i --rm --link=flask:flask pstauffer/curl sh < flask/src/test.sh
+    - docker rm -f -v flask
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
+    - docker push $CONTAINER_RELEASE_IMAGE
+
+deploy_staging:
+  stage: deploy_staging
+  script:
+    - cd /usr/local/bin
+    - curl -O https://storage.googleapis.com/kubernetes-release/release/v1.5.1/bin/linux/amd64/kubectl
+    - chmod +x kubectl
+    - cd /builds/root/k8-ci
+    - kubectl config set-cluster kargo --server=https://159.100.252.54:8443 --certificate-authority=kubectl/ca.pem
+    - kubectl config set-credentials kadmin --certificate-authority=kubectl/ca.pem --client-key=kubectl/admin-node1-key.pem --client-certificate=kubectl/admin-node1.pem  
+    - kubectl config set-context kargo --cluster=kargo --user=kadmin
+    - kubectl config use-context kargo
+    - kubectl delete -f flask/flask-deployment.yaml
+    - kubectl apply -f flask/flask-deployment.yaml
+
+deploy_prod:
+  stage: deploy_prod
+  when: manual
+  script:
+    - cd /usr/local/bin
+    - curl -O https://storage.googleapis.com/kubernetes-release/release/v1.5.1/bin/linux/amd64/kubectl
+    - chmod +x kubectl
+    - cd /builds/root/k8-ci
+    - kubectl config set-cluster kargo --server=https://159.100.252.54:8443 --certificate-authority=kubectl/ca.pem
+    - kubectl config set-credentials kadmin --certificate-authority=kubectl/ca.pem --client-key=kubectl/admin-node1-key.pem --client-certificate=kubectl/admin-node1.pem
+    - kubectl config set-context kargo --cluster=kargo --user=kadmin
+    - kubectl config use-context kargo
+    - kubectl delete -f flask/flask-deployment.yaml
+    - kubectl apply -f flask/flask-deployment.yaml

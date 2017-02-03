@@ -1,0 +1,128 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: gitlab
+  namespace: gitlab
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: gitlab
+        app: gitlab
+    spec:
+      containers:
+      - name: gitlab
+        image: sameersbn/gitlab:8.12.7
+        imagePullPolicy: Always
+        env:
+        - name: TZ
+          value: Europe/Stockholm
+        - name: GITLAB_TIMEZONE
+          value: Stockholm
+        - name: DEBUG
+          value: "false"
+
+        - name: GITLAB_SECRETS_DB_KEY_BASE
+          value: P26qS5+Csz50Dkd0DLM2oN9owVBFg0PB
+        - name: GITLAB_SECRETS_SECRET_KEY_BASE
+          value: KVaMTKLAIElEp0s4L02c1O9JCP0Rfapb
+        - name: GITLAB_SECRETS_OTP_KEY_BASE
+          value: nXJJ358Qnci0yF9qpAsLrF2vImaoFR03
+
+        - name: GITLAB_ROOT_PASSWORD
+          value: rootpassword
+        - name: GITLAB_ROOT_EMAIL
+          value: root@satoshi.tech
+
+        - name: GITLAB_HOST
+          value: gitlab.satoshi.tech
+        - name: GITLAB_PORT
+          value: "80"
+        - name: GITLAB_SSH_HOST
+          value: "ssh-gitlab.satoshi.tech"
+        - name: GITLAB_SSH_PORT
+          value: "1022"
+
+        - name: GITLAB_NOTIFY_ON_BROKEN_BUILDS
+          value: "true"
+        - name: GITLAB_NOTIFY_PUSHER
+          value: "false"
+
+        - name: GITLAB_BACKUP_SCHEDULE
+          value: daily
+        - name: GITLAB_BACKUP_TIME
+          value: 01:00
+
+        - name: DB_TYPE
+          value: postgres
+        - name: DB_HOST
+          value: gitlab-postgresql
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: gitlab
+        - name: DB_PASS
+          value: +BP52QIxpT/flVCMpL3KXA==
+        - name: DB_NAME
+          value: gitlab_production
+
+        - name: REDIS_HOST
+          value: gitlab-redis
+        - name: REDIS_PORT
+          value: "6379"
+
+        - name: SMTP_ENABLED
+          value: "false"
+        - name: SMTP_DOMAIN
+          value: ""
+        - name: SMTP_HOST
+          value: ""
+        - name: SMTP_PORT
+          value: ""
+        - name: SMTP_USER
+          value: ""
+        - name: SMTP_PASS
+          value: ""
+        - name: SMTP_STARTTLS
+          value: "true"
+        - name: SMTP_AUTHENTICATION
+          value: login
+
+        - name: IMAP_ENABLED
+          value: "false"
+        - name: IMAP_HOST
+          value: imap.gmail.com
+        - name: IMAP_PORT
+          value: "993"
+        - name: IMAP_USER
+          value: mailer@example.com
+        - name: IMAP_PASS
+          value: password
+        - name: IMAP_SSL
+          value: "true"
+        - name: IMAP_STARTTLS
+          value: "false"
+        ports:
+        - name: http
+          containerPort: 80
+        - name: ssh
+          containerPort: 22
+        volumeMounts:
+        - mountPath: /home/git/data
+          name: data
+        livenessProbe:
+          httpGet:
+            path: /users/sign_in
+            port: 80
+          initialDelaySeconds: 180
+          timeoutSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /users/sign_in
+            port: 80
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+      volumes:
+      - name: data
+        emptyDir: {}

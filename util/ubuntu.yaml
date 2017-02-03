@@ -10,4 +10,4 @@ spec:
     args:
     - bash
     - -c
-    - "apt-get update -y && apt-get install -y curl nmap netcat socat dnsutils && sleep 36000"
+    - "apt-get update -y && apt-get install -y curl nmap netcat socat dnsutils iputils-ping net-tools && sleep 36000"

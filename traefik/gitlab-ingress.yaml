@@ -1,0 +1,16 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gitlab
+  namespace: gitlab
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  rules:
+  - host: gitlab.satoshi.tech
+    http:
+      paths:
+      - backend:
+          serviceName: gitlab
+          servicePort: 80
