@@ -292,7 +292,122 @@ Access GUI: http://any_minion_node_ip:30999
 
 # 5. Docker private registry addon
 
+I use the manifests [here](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/registry), with some little modifications. For some reasons, I have to force the image:docker.io/registry:2, otherwise docker can't connect to that deployed registry. We use registry without password nor tls to make it easier.
+
+Docker daemon on nodes should already have the service network range as insecure-registry. So when you will make available registry service on k8s network, docker we will be able to use it.
+
+To check daemon on one node: (you should see   --insecure-registry=10.233.0.0/18 )
+
+    ps aux | grep docker
+
+Deploy the registry:
+
+    kubectl apply -f registry
+
+In order to target the registry from outside, or within k8s, please setup traefik (see lb section) and create a dns (ex:registry.satoshi.tech) pointing to your lb node.
+
+Then add ingress config so traefik are aware of registry service:
+
+    kubectl apply -f traefik/kube-system-ingress.yaml
+  
+Check service access on one node or from anywhere
+
+    curl 10.233.5.205:5000/v2/_catalog
+    curl registry.satoshi.tech/v2/_catalog
+
+Or from the ubuntu image:
+
+    kubectl exec -it ubuntu --namespace=kube-system -- curl registry.kube-system:5000/v2/_catalog
+    kubectl exec -it ubuntu --namespace=kube-system -- curl registry.satoshi.tech/v2/_catalog
+
+Add an image to private registry
+
+    docker pull busyboy
+    docker tag busybox registry.satoshi.tech/busybox
+    docker push registry.satoshi.tech/busybox
+
 # 6. Gitlab for CI & CD
+
+This setup is based on the great blog of [lwolf](http://blog.lwolf.org/post/how-to-easily-deploy-gitlab-on-kubernetes/)
+
+Deploy gitlab
+
+    kubectl apply -f gitlab/gitlab
+
+Use traefic as a loadbalancer (see lb section), create a dns record (ex: gitlab.satoshi.tech) and deploy the relate ingress:
+
+    kubectl apply -f traefik/gitlab-ingress.yaml
+
+You should be able to access gitlab with Login:root/rootpassword 
+http://gitlab.satoshi.tech or http://a_minion_ip:30088
+
+Setup the cache server for docker runner builds
+
+    kubectl apply -f gitlab/minio
+
+Create the runner cache folder
+
+    kubectl exec -it minio-1144410361-pr5ym --namespace=gitlab -- mkdir /export/runner
+    kubectl exec -it minio-1144410361-pr5ym --namespace=gitlab -- ls /export
+
+Register a runner to gitlab:
+
+    kubectl run -it runner-registrator --image=gitlab/gitlab-runner:v1.5.2 --restart=Never -- register 
+  
+Answer the questions:
+```
+Gitlab-ci coordinator URL: http://gitlab.gitlab/ci
+Registration token: [Find it in: gitlab GUI > setting > Runners > Use the following registration token during setup...]
+Description: gitlab-docker-runner 
+Tag: shared,specific
+Executor: docker
+Default docker image: python:3.5.1
+```
+
+Delete that temp container:
+  kubectl delete po/runner-registrator
+
+Edit your final runner config
+```  
+nano gitlab/gitlab-runner/gitlab-runner-docker-configmap.yml  
+And replace:
+Token: [login gitlab > setting > Runners > clic on the pencil/notepad icon]
+AccessKey and SecretKey: [find the in the logs of minio container]
+kubectl logs -f minio-1144410361-pr5ym --namespace=gitlab
+```
+
+Deploy runner
+
+    kubectl apply -f gitlab/gitlab-runner
+
+**Gitlab CD and CI**
+
+Configure a repo & add your kubectl access to that repo (for production, please do not share your certificates on a public repo)
+
+    cp arg0/kubectl gitlab/ci/.
+    cd gitlab/ci
+
+Here you need this repo targeting your gitlab, such as mine:
+  git init 
+  git remote add origin http://gitlab.satoshi.tech/root/k8-ci.git  
+
+Then edit the gitlab-ci config
+  nano .gitlab-ci.yml
+    - your docker repo registry and name (I stayed on default dockerhub)
+    - your k8s master ip
+
+And push:
+  git commit -am 'test'
+  git push
+
+Go to gitlab to check pipeline and the status.
+
+Check the app:
+curl 185.19.28.220:30555
+
+At the end, you should be able to edit app.py, push the code, and see the result later when the pipeline is finished.
+
+
 
 # 7. LoadBalancers
 
