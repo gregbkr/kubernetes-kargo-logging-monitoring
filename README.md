@@ -104,7 +104,7 @@ a different port.
 Set ansible configuration with your key and inventory
 
 ```
-nano inventory/ansible.cfg
+nano ansible.cfg
 
 private_key_file=~/.ssh/id_rsa_sbexx
 remote_user=core
