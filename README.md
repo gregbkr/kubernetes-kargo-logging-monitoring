@@ -1,6 +1,6 @@
 # Deploy kubernetes via kargo with logging (efk) & monitoring (prometheus) support #
 
-![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra1.JPG)
+![k8s_Infra2.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra2.JPG)
 
 ## What you will get:
 - **Kargo**: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
