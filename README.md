@@ -3,21 +3,21 @@
 ![k8s_Infra1.jpg](https://github.com/gregbkr/kubernetes-kargo-logging-monitoring/raw/master/media/k8s-infra1.JPG)
 
 ## What you will get:
-- Kargo: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
+- **Kargo**: a powerful and flexible way to build, hot upgrade/migrate, and scale kubernetes (k8s)
 - X number of master node running : k8s for container orchestration, it will pilot and gives work to the minions
 - Y number of minion/slave/worker nodes : running the actual containers and doing the actual work
 - Z number of etcd: database to store your k8s configuration
-- Efk: we will send all k8s container logs to an elasticsearch DB, via fluentd, and visualize dashboards with kibana
-- Prometheus will monitoring all this infra, with grafana dashbaord
-- Heapster is an alternative for monitoring your k8s cluster
+- **Efk**: we will send all k8s container logs to an elasticsearch DB, via fluentd, and visualize dashboards with kibana
+- **Prometheus** will monitoring all this infra, with grafana dashbaord
+- **Heapster** is an alternative for monitoring your k8s cluster
 - K8s dashboard addon (not efk dashboard), where you can visualize k8s component in a GUI
-- Registry: a private docker registry deployed in the k8s cluster
-- Gitlab: a full example of continuous integration and continuous delivery of a simple app, in k8s
+- **Registry**: a private docker registry deployed in the k8s cluster
+- **Gitlab CI/CD**: a full example of continuous integration and continuous delivery of a simple app, in k8s
 - Service-loadbalancer (static haproxy): which is the public gateway to access your internal k8s services (kibana, grafana)
-- Dynamic loadbalancer (traefik): an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
+- **Traefik dynamic loadbalancer**: an alternative to haproxy, quite powerful with its dynamic service discovery and auto certification
 
 *Prerequisit:*
-- Kargo support many different types of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give to kargo some coreos hosts: IP, and ssh access.
+- Kargo support many different types of cloud. I will show you the broader way to build k8s while abstracting the OS creation. You will just need to give kargo some coreos hosts IP and ssh access.
 
 More info: you can find an overview of that setup on my blog: https://greg.satoshi.tech/
 
@@ -26,7 +26,7 @@ Summary:
 - [1. Deploy kubernetes](#1-deploy-kubernetes)
 - [2. Deploy logging (efk) to collect k8s & containers events](#2-deploy-logging-efk-to-collect-k8s--containers-events)
 - [3. Monitoring services and containers](#3-monitoring-services-and-containers)
-- [4. Kubenetes dashboard addon (not logging efk)](#4-kubenetes-dashboard-addon-not-logging-efk)
+- [4. Kubenetes dashboard addon](#4-kubenetes-dashboard-addon)
 - [5. Docker private registry addon](#5-docker-private-registry-addon)
 - [6. Gitlab for CI & CD](#6-gitlab-for-ci--cd)
 - [7. LoadBalancers](#7-loadbalancers)
@@ -52,17 +52,24 @@ We will deploy a base k8s multi-master, etcd cluster, and dns support. You can m
 
 **Bastion**
 
-An ubuntu vm where you will run kargo (which is ansible recipes in the background), and manage k8s with kubectl.
-You need latest version of ansible. You need Netaddr too: 
+An ubuntu vm from where you will install the infra with kargo tool (which is ansible recipes in the background), and manage/pilot the k8s cluster with kubectl.
+
+You need the latest version of ansible. 
+
+You will need Netaddr install on the bastion too: 
 
     pip install netaddr
 
 **Firewall**
 
 This setup doesn't managed firewall rules yet.
-Please create a security group with port 0-40000 TCP & UDP open for all k8s servers inside that group.
-Open 22,80,443 port so you ubuntu(bastion) running kargo ansible can install recipes, and run kubectl.
-Open outside acccess 80,443 and in time services we will test later(efk, prometheus)
+
+Please create a security group with port 0-40000 tcp & udp open for all k8s servers inside that group.
+
+Bastion will be ouside this group. Please give some accesses to bastion on 22,80,443 port so this ubuntu server will be able to run kargo ansible recipes(22/tcp), and run kubectl(443/tcp).
+
+Open outside acccess to 80,443/tcp, 5601/tcp (kibana), 3000 & 3002/tcp (grafana), 8080/tcp (traefik), 9090/tcp (prometheus), 9999/tcp(k8s-dashboard).
+
 If you need to implement firewall, a good start here: https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/blob/master/ansible/roles/k8s/tasks/create_secgroup_rules.yml
 
 **Coreos**
@@ -281,7 +288,7 @@ You can load Cluster or Pods dashboards. When viewing Pods, type manually "names
 ![grafana2-cluster1.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/grafana2-cluster2.JPG)
 ![grafana2-cluster1.jpg](https://github.com/gregbkr/kubernetes-ansible-logging-monitoring/raw/master/media/grafana2-cluster3.JPG)
 
-# 4. Kubenetes dashboard addon (not logging efk)
+# 4. Kubenetes dashboard addon
 
 Dashboard addon let you see k8s services and containers via a nice GUI.
 
@@ -351,7 +358,7 @@ Deploy gitlab
     kubectl apply -f gitlab/gitlab
     kubectl get all --namespace=gitlab     <-- wait pods to be ready
 
-Use traefic as a loadbalancer (see lb section), create a dns record pointing to your lb_node (ex: gitlab.satoshi.tech) and deploy the relate ingress:
+Use traefic as a loadbalancer (see lb section), create a dns record pointing to your lb_node (ex: gitlab.satoshi.tech) and deploy the related ingress:
 
     kubectl apply -f traefik/gitlab-ingress.yaml
 
