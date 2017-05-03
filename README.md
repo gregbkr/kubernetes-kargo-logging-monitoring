@@ -122,6 +122,14 @@ become_method = sudo
 become_user = root
 ```
 
+You can now add logging support (efk) out of the box when adding the following flag:
+```
+nano inventory/group_vars/k8s-cluster.yml
+
+# Monitoring apps for k8s
+efk_enabled: enable
+```
+
 Then deploy k8s with ansible:
 
     ansible-playbook cluster.yml
@@ -191,7 +199,31 @@ If issues, see troubleshooting section.
 Do you want to migration k8s, add new node? Please see the annexes.
 
 # 2. Deploy logging (efk) to collect k8s & containers events
-	
+
+Please note that you may already have efk deployed if you enabled the flag *efk_enabled* when you installed via kargo.
+If it is the case, you don't need to deploy anything, but just access the right service:
+- Name: kibana-logging
+- Namespace: kube-system
+- Port: 5601
+
+I didn't map yet this service to any lb (as it was added later than this doc). You can't access directly kibana UI because no host port (only internal) are declared in the service configuration.  
+
+To give access to the service you will have to modify the lb:
+```
+Nano service-loadbalancer-daemonset.yaml
+   args:
+    - --tcp-services=kibana-logging:5601
+```
+And deploy it (see section lb)
+
+Same for traefik, you need to edit the name and namespace of the service:
+```
+nano traefik/logging-ingress.yaml
+metadata:
+  name: kibana-logging 
+  namespace: kube-system
+```
+
 ### 2.1 Deploy elasticsearch, fluentd, kibana
 
     kubectl apply -f logging    <-- all deployment declarations and configurations are here
